@@ -108,7 +108,9 @@ async function dl(did,fobj){
     stream.on('progress', async (info)=> {
       //sxt=ff.name+"\n\n"+await SizeF(info.bytesLoaded)+"/"+await SizeF(info.bytesTotal)+"\n Downloaded!\n\n\n"+await SizeF(ff.size);
       sxp=dlm+"\n\n"+await pres(info.bytesLoaded,info.bytesTotal)+"%  Done!";
-      mxtt=await bot.telegram.editMessageText(owner,mxtt.message_id,null,sxp);
+      if(info.bytesLoaded<info.bytesTotal){
+        mxtt=await bot.telegram.editMessageText(owner,mxtt.message_id,null,sxp);
+      }
     //console.log(info.bytesLoaded,"/",info.bytesTotal);
      if(info.bytesLoaded==info.bytesTotal){
        setTimeout(async ()=>{
