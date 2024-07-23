@@ -27,8 +27,9 @@ app.use(bodyParser.json());
 //Mjs cust..
 File.defaultHandleRetries = (tries, error, cb) => {if (tries > 8)  {cb(error);} else {setTimeout(cb, 1000 * Math.pow(2, tries));}};
 const sleepf = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
-function pres(percent, total) {
-    return ((percent/ 100) * total).toFixed(2)
+function pres(per, tot) {
+    p=Number(per);t=Number(tot);
+    return ((p / 100) * t).toFixed(2)
 }
 app.get("/",(req,res)=>{
   res.send("200");
