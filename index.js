@@ -29,7 +29,7 @@ File.defaultHandleRetries = (tries, error, cb) => {if (tries > 8)  {cb(error);} 
 const sleepf = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
 function pres(per, tot) {
     p=Number(per);t=Number(tot);
-    return ((p / 100) * t).toFixed(2)
+    return ((p / t) * 100).toFixed(2)
 }
 app.get("/",(req,res)=>{
   res.send("200");
