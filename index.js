@@ -89,37 +89,38 @@ formData.append('caption',obj.file.name);response = await axios.post(`https://ap
 }
 
 async function dl(did,fobj){
-  return new Promise(async (res,rej)=>{fol = File.fromURL(flu=follf+"/file/"+did[1]);
-  await fol.loadAttributes(async (error, ff) => {
-  var ffpp=path.join(__dirname,dlp,ff.name);
-    Ff=ff;
-  console.log("doing: "+ff.name);
-  stream= ff.download();
-  stream.on('error', error => console.error(error))
-  stream.on('progress', info => {
-  console.log(info.bytesLoaded,"/",info.bytesTotal);
-if(info.bytesLoaded==info.bytesTotal){setTimeout(async ()=>{
-      let start = fs.statSync(ffpp).size;
-  if(start<info.bytesLoaded){
-  file.download({ start })
-  .pipe(fs.createWriteStream(ffpp, {flags: 'r+',start}));
-  }else{
-      console.log("dl done");
-    if(fobj.type=="image"){
-      rr=await sendImg({fp:ffpp,file:ff});
-    }else if(fobj.type=="video"
-  &&
-    fobj.size<sizelimits.M20){
-      rr=await sendV({fp:ffpp,file:ff});
-             }else{
-      rr= await sendT({fp:ffpp,file:ff});
-    }
-     if(rr==true){
-      fs.unlinkSync(ffpp);
-     }else{
-      console.log("error on send-",ffpp);
-     }
-    res(rr);
+  return new Promise(async (res,rej)=>{
+    fol = File.fromURL(flu=follf+"/file/"+did[1]);
+    await fol.loadAttributes(async (error, ff) => {
+      var ffpp=path.join(__dirname,dlp,ff.name);
+      Ff=ff;
+      console.log("doing: "+ff.name);
+      stream= ff.download();
+      stream.on('error', error => console.error(error))
+      stream.on('progress', info => {
+        console.log(info.bytesLoaded,"/",info.bytesTotal);
+        if(info.bytesLoaded==info.bytesTotal){setTimeout(async ()=>{
+         let start = fs.statSync(ffpp).size;
+         if(start<info.bytesLoaded){
+           //for err fix-->file replaced to ff...
+           ff.download({ start }).pipe(fs.createWriteStream(ffpp, {flags: 'r+',start}));
+         }else{
+         console.log("dl done");
+         if(fobj.type=="image"){
+            rr=await sendImg({fp:ffpp,file:ff});
+         }else if(fobj.type=="video"&&fobj.size<sizelimits.M20){
+            rr=await sendV({fp:ffpp,file:ff});
+         }else{
+            rr= await sendT({fp:ffpp,file:ff});
+         }
+         if(rr==true){
+            fs.unlinkSync(ffpp);
+            console.clear();
+         }else if(rr==false){
+            fs.unlinkSync(ffpp);
+            console.log("error on send-",ffpp);
+         }
+         res(rr);
       }},50);}});
    stream.pipe(
      fs.createWriteStream(ffpp)
