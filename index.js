@@ -41,6 +41,7 @@ function cleardl(){
     fs.unlink(path.join(directory, file), 
       (err) => {
       if (err) throw err;}); }});
+  return 1;
 }
 
 const replacerFunc = () => {const visited = new WeakSet();return (key, value) => {
@@ -149,20 +150,13 @@ async function timingS(){
     }
   }else{
     console.log("no files");
-    bot
-      .telegram
-      .sendMessage(
-        owner,
-        "Process finished!!😇"
-      );
+    bot.telegram.sendMessage(owner,"Process finished!!😇");
     run=0;
   }
   }else{
     console.log("stopped!!!!");
     await cleardl();
-    bot
-      .telegram
-      .sendMessage(owner,"process stoped!🙂\nBy You");
+    bot.telegram.sendMessage(owner,"process stoped!🙂\nBy You");
     stopn=0;
     run=0;
   }
@@ -199,6 +193,10 @@ app.listen(3000,()=>{
   if (!fs.existsSync(ddlp)){
     fs.mkdirSync(ddlp);
     console.log("download path created!");
+  }else{
+    console.log("download path exists!");
+    await cleardl();
+    console.log("cleared dl path!");
   }
 //ll="https://mega.nz/folder/2IlUSQwA#bMIrsQnNZtN5H6D2kcB_rA";
     /*console.log(await megaC(ll));;
