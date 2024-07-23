@@ -18,7 +18,7 @@ var run=0;stopn=0;
 var filetypes={jpg:"image",png:"image",gif:"image",jpeg:"image",svg:"image",bmp:"image",tiff:"image",ico:"image",webp:"image",mp4:"video",mp3:"audio",mkv:"video",webm:"video",flv:"video",avi:"video",mov:"video",MOV:"video"
 };
 sizelimits={M20:20971520,M50:52428800,M100:104857600,};
-timingsSleep=1000;
+timingsSleep=process.env.ts==null ? 1000:process.env.ts;
 var smethod={image:{method:"sendPhoto",name:"photo"},video:{method:"sendVideo",name:"video"},document:{method:"sendDocument",name:"document"},audio:{method:"sendAudio",name:"audio"}};
 
 app.use(cors());
@@ -74,24 +74,45 @@ async function sendV(obj,res){
  formData = new FormData();
  formData.append('chat_id',channel);
 formData.append('video',await fs.createReadStream(path.resolve(obj.fp)));
-formData.append('caption',obj.file.name);response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, formData, {headers:{'Content-Type': 'multipart/form-data'},data:formData});
-    return response.data.ok;
+formData.append('caption',obj.file.name);
+    response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, formData, {headers:{'Content-Type': 'multipart/form-data'},data:formData,validateStatus: () => true});
+    if(response.ok==false){
+      if(response.error_code==429){
+         await sleepf(response.parameters.retry_after*1000);
+         response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, formData, {headers:{'Content-Type': 'multipart/form-data'},data:formData,validateStatus: () => true});
+      }
+    }
+    return response.data;
 }
 
 async function sendImg(obj,res){
  formData = new FormData();
  formData.append('chat_id',channel);
 formData.append('photo',await fs.createReadStream(path.resolve(obj.fp)));
-formData.append('caption',obj.file.name);response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, formData, {headers:{'Content-Type': 'multipart/form-data'},data:formData});
-    return response.data.ok;
+formData.append('caption',obj.file.name);
+    response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, formData, {headers:{'Content-Type': 'multipart/form-data'},data:formData,validateStatus: () => true});
+    if(response.ok==false){
+      if(response.error_code==429){
+         await sleepf(response.parameters.retry_after*1000);
+         response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, formData, {headers:{'Content-Type': 'multipart/form-data'},data:formData,validateStatus: () => true});
+      }
+    }
+    return response.data;
 }
 
 async function sendT(obj,res){
  formData = new FormData();
  formData.append('chat_id',channel);
 formData.append('document',await fs.createReadStream(path.resolve(obj.fp)));
-formData.append('caption',obj.file.name);response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, formData, {headers:{'Content-Type': 'multipart/form-data'},data:formData});
-    return response.data.ok;
+formData.append('caption',obj.file.name);
+    response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, formData, {headers:{'Content-Type': 'multipart/form-data'},data:formData,validateStatus: () => true});
+    if(response.ok==false){
+      if(response.error_code==429){
+         await sleepf(response.parameters.retry_after*1000);
+         response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, formData, {headers:{'Content-Type': 'multipart/form-data'},data:formData,validateStatus: () => true});
+      }
+    }
+    return response.data;
 }
 
 async function dl(did,fobj){
@@ -103,6 +124,12 @@ async function dl(did,fobj){
     console.log("doing: "+ff.name);
     dlm=`Downloading:${ff.name}\n ${await SizeF(ff.size)}`;
     mxtt=await bot.telegram.sendMessage(owner,dlm);
+    if(mxtt.ok==false){
+        if(mxtt.error_code==429){
+           await sleepf(mxtt.parameters.retry_after*1000);
+           mxtt=await bot.telegram.sendMessage(owner,dlm);
+        }
+    }
     stream= ff.download();
     stream.on('error', error => console.error(error))
     stream.on('progress', async (info)=> {
@@ -110,6 +137,12 @@ async function dl(did,fobj){
       sxp=dlm+"\n\n"+await pres(info.bytesLoaded,info.bytesTotal)+"%  Done!";
       if(info.bytesLoaded<info.bytesTotal){
         mxtt=await bot.telegram.editMessageText(owner,mxtt.message_id,null,sxp);
+        if(mxtt.ok==false){
+          if(mxtt.error_code==429){
+           await sleepf(mxtt.parameters.retry_after*1000);
+           mxtt=await bot.telegram.sendMessage(owner,mxtt.message_id,null,sxp);
+          }
+        }
       }
     //console.log(info.bytesLoaded,"/",info.bytesTotal);
      if(info.bytesLoaded==info.bytesTotal){
@@ -121,24 +154,33 @@ async function dl(did,fobj){
         }else{
            // console.log("dl done");
            mxtt=await bot.telegram.editMessageText(owner,mxtt.message_id,null,"Downloaded!\nNow Uploading!!!!!!");
+           if(mxtt.ok==false){
+             if(mxtt.error_code==429){
+                await sleepf(mxtt.parameters.retry_after*1000);
+                mxtt=await bot.telegram.editMessageText(owner,mxtt.message_id,null,"Downloaded!\nNow Uploading!!!!!!");
+             }
+           }
            if(fobj.type=="image"){
-              rr=await sendImg({fp:ffpp,file:ff});
+              rr=await sendImg({fp:ffpp,file:ff});      
            }else if(fobj.type=="video"&&fobj.size<sizelimits.M20){
               rr=await sendV({fp:ffpp,file:ff});
            }else{
               rr= await sendT({fp:ffpp,file:ff});
            }
-           if(rr==true){
+           if(rr.ok==true){
               fs.unlinkSync(ffpp);
               await bot.telegram.deleteMessage(owner,mxtt.message_id);
            }else{
               console.log("error on send-",ffpp);
            }
            res(rr);
-      }},50);}});
+        }},50);
+       }
+    });
    stream.pipe(
      fs.createWriteStream(ffpp)
-   );})}) 
+   );
+ })}) 
 }
 
 async function timingS(){
@@ -163,7 +205,13 @@ async function timingS(){
     }
   }else{
     console.log("no files");
-    await bot.telegram.sendMessage(owner,"Process finished!!😇");
+    fmx=await bot.telegram.sendMessage(owner,"Process finished!!😇");
+    if(fmx.ok==false){
+       if(fmx.error_code==429){
+          await sleepf(fmx.parameters.retry_after*1000);
+           fmx=await bot.telegram.sendMessage(owner,"Process finished!!😇");
+       }
+    }
     run=0;
   }
   }else{
