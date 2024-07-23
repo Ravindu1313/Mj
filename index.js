@@ -27,7 +27,9 @@ app.use(bodyParser.json());
 //Mjs cust..
 File.defaultHandleRetries = (tries, error, cb) => {if (tries > 8)  {cb(error);} else {setTimeout(cb, 1000 * Math.pow(2, tries));}};
 const sleepf = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
-
+function pres(percent, total) {
+    return ((percent/ 100) * total).toFixed(2)
+}
 app.get("/",(req,res)=>{
   res.send("200");
 })
@@ -92,43 +94,44 @@ formData.append('caption',obj.file.name);response = await axios.post(`https://ap
 }
 
 async function dl(did,fobj){
-  return new Promise(async (res,rej)=>{fol = File.fromURL(flu=follf+"/file/"+did[1]);
-  await fol.loadAttributes(async (error, ff) => {
-  var ffpp=path.join(__dirname,dlp,ff.name);
+  return new Promise(async (res,rej)=>{
+    fol = File.fromURL(flu=follf+"/file/"+did[1]);
+    await fol.loadAttributes(async (error, ff) => {
+    var ffpp=path.join(__dirname,dlp,ff.name);
     Ff=ff;
-  console.log("doing: "+ff.name);
-  mxtt=await bot.telegram.sendMessage(owner,`Downloading:${ff.name}\n ${await SizeF(ff.size)}`);
-  stream= ff.download();
-  stream.on('error', error => console.error(error))
-  stream.on('progress', async (info)=> {
-  sxt=ff.name+"\n\n"+await SizeF(info.bytesLoaded)+"/"+await Siinfo.bytesTotal+"\n Downloaded!\n\n\n"+await SizeF(ff.size);
-      mxtt=await bot.telegram.editMessageText(owner,mxtt.message_id,null,sxt);
+    console.log("doing: "+ff.name);
+    dlm=`Downloading:${ff.name}\n ${await SizeF(ff.size)}`;
+    mxtt=await bot.telegram.sendMessage(owner,dlm);
+    stream= ff.download();
+    stream.on('error', error => console.error(error))
+    stream.on('progress', async (info)=> {
+      //sxt=ff.name+"\n\n"+await SizeF(info.bytesLoaded)+"/"+await SizeF(info.bytesTotal)+"\n Downloaded!\n\n\n"+await SizeF(ff.size);
+      sxp=dlm+"\n\n"+await pres(info.bytesLoaded,info.bytesTotal)+"%  Done!";
+      mxtt=await bot.telegram.editMessageText(owner,mxtt.message_id,null,sxp);
     //console.log(info.bytesLoaded,"/",info.bytesTotal);
-if(info.bytesLoaded==info.bytesTotal){setTimeout(async ()=>{
-      let start = fs.statSync(ffpp).size;
-  if(start<info.bytesLoaded){
-    //file replaced to ff.....
-  ff.download({ start })
-  .pipe(fs.createWriteStream(ffpp, {flags: 'r+',start}));
-  }else{
-     // console.log("dl done");
-      mxtt=await bot.telegram.editMessageText(owner,mxtt.message_id,null,"Downloaded!\nNow Uploading!!!!!!");
-    if(fobj.type=="image"){
-      rr=await sendImg({fp:ffpp,file:ff});
-    }else if(fobj.type=="video"
-  &&
-    fobj.size<sizelimits.M20){
-      rr=await sendV({fp:ffpp,file:ff});
-             }else{
-      rr= await sendT({fp:ffpp,file:ff});
-    }
-     if(rr==true){
-      fs.unlinkSync(ffpp);
-       await bot.telegram.deleteMessage(owner,mxtt.message_id);
-     }else{
-      console.log("error on send-",ffpp);
-     }
-    res(rr);
+     if(info.bytesLoaded==info.bytesTotal){
+       setTimeout(async ()=>{
+        let start = fs.statSync(ffpp).size;
+        if(start<info.bytesLoaded){
+           //file replaced to ff.....
+           ff.download({ start }).pipe(fs.createWriteStream(ffpp, {flags: 'r+',start}));
+        }else{
+           // console.log("dl done");
+           mxtt=await bot.telegram.editMessageText(owner,mxtt.message_id,null,"Downloaded!\nNow Uploading!!!!!!");
+           if(fobj.type=="image"){
+              rr=await sendImg({fp:ffpp,file:ff});
+           }else if(fobj.type=="video"&&fobj.size<sizelimits.M20){
+              rr=await sendV({fp:ffpp,file:ff});
+           }else{
+              rr= await sendT({fp:ffpp,file:ff});
+           }
+           if(rr==true){
+              fs.unlinkSync(ffpp);
+              await bot.telegram.deleteMessage(owner,mxtt.message_id);
+           }else{
+              console.log("error on send-",ffpp);
+           }
+           res(rr);
       }},50);}});
    stream.pipe(
      fs.createWriteStream(ffpp)
