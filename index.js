@@ -134,8 +134,11 @@ async function dl(did,fobj){
     stream.on('error', error => console.error(error))
     stream.on('progress', async (info)=> {
       //sxt=ff.name+"\n\n"+await SizeF(info.bytesLoaded)+"/"+await SizeF(info.bytesTotal)+"\n Downloaded!\n\n\n"+await SizeF(ff.size);
-      sxp=dlm+"\n\n"+await pres(info.bytesLoaded,info.bytesTotal)+"%  Done!";
+       prsent=await pres(info.bytesLoaded,info.bytesTotal);
+        sxp=dlm+"\n\n"+prsent+"%  Done!";
       if(info.bytesLoaded<info.bytesTotal){
+       //limmiting progress send....(:tg req policy).
+        if(prsent<=5){
         mxtt=await bot.telegram.editMessageText(owner,mxtt.message_id,null,sxp);
         if(mxtt.ok==false){
           if(mxtt.error_code==429){
@@ -143,6 +146,7 @@ async function dl(did,fobj){
            mxtt=await bot.telegram.sendMessage(owner,mxtt.message_id,null,sxp);
           }
         }
+       }else{}
       }
     //console.log(info.bytesLoaded,"/",info.bytesTotal);
      if(info.bytesLoaded==info.bytesTotal){
